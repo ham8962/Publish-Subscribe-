@@ -9,20 +9,19 @@ public class Broker {
     private List<String> broker;
     private final Lock lock;
     private final Condition condition;
-    private boolean threadFlag;
 
-    private Broker(){
+
+    private Broker() {
         this.lock = new ReentrantLock();
         this.condition = lock.newCondition();
         this.broker = new ArrayList<>();
-        this.threadFlag = true;
     }
 
     private static class BrokerInstanceHolder {
         private static final Broker instance = new Broker();
     }
 
-    public static Broker getInstance(){
+    public static Broker getInstance() {
         return BrokerInstanceHolder.instance;
     }
 
@@ -30,31 +29,29 @@ public class Broker {
         lock.lock();
         try {
             broker.add(message);
-            if (!threadFlag){
-                broker.add(message);
-                condition.signal();
-                threadFlag = true;
+            for (String data : broker) {
+                System.out.println("message is added");
             }
+            condition.signal();
         } finally {
             lock.unlock();
         }
     }
 
-    public String recive() {
+    public void receive() {
         lock.lock();
         try {
-            if (broker.isEmpty()) {
+            while (broker.isEmpty()){
                 condition.await();
-                threadFlag = false;
             }
-            System.out.println("Is it?");
-            return broker.remove(0);
-        } catch(InterruptedException exception){
+            if (!broker.isEmpty()) {
+                broker.remove(0);
+                System.out.println("Message is received");
+            }
+        } catch (InterruptedException exception) {
 
-        }
-         finally {
+        } finally {
             lock.unlock();
         }
-        return null;
     }
 }
